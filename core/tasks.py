@@ -20,26 +20,36 @@ def process_job(job_id):
     job.save(update_fields=["status", "started_at"])
 
     try:
-        input_file = job.input_file.read().decode("utf-8")
+        input_bytes = job.input_file.read()
+
+        # Image operations need raw bytes; text operations need a decoded string.
+        if job.operation in ("RESIZE",):
+            input_data = input_bytes
+        else:
+            input_data = input_bytes.decode("utf-8")
 
         result = execute_operation(
             job.operation,
-            input_file,
+            input_data,
             job.parameters,
         )
 
-        result_content = json.dumps(
-            result,
-            indent=2,
-        )
-
-        result_filename = f"job_{job.id}_result.json"
-
-        job.result_file.save(
-            result_filename,
-            ContentFile(result_content.encode("utf-8")),
-            save=False,
-        )
+        # bytes result → binary file (.png); dict result → JSON file
+        if isinstance(result, bytes):
+            result_filename = f"job_{job.id}_result.png"
+            job.result_file.save(
+                result_filename,
+                ContentFile(result),
+                save=False,
+            )
+        else:
+            result_content = json.dumps(result, indent=2)
+            result_filename = f"job_{job.id}_result.json"
+            job.result_file.save(
+                result_filename,
+                ContentFile(result_content.encode("utf-8")),
+                save=False,
+            )
 
         job.status = Job.Status.COMPLETED
         job.completed_at = timezone.now()

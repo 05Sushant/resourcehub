@@ -1,5 +1,7 @@
 import csv
-from io import StringIO
+from io import BytesIO, StringIO
+
+from PIL import Image
 
 
 def infer_column_type(values):
@@ -24,6 +26,7 @@ def infer_column_type(values):
         return "float"
     except ValueError:
         return "string"
+
 
 def profile_csv(csv_content):
     reader = csv.DictReader(StringIO(csv_content))
@@ -51,9 +54,29 @@ def profile_csv(csv_content):
         "columns_info": columns_info,
     }
 
+
+def resize_image(image_bytes, width, height):
+    """Resize *image_bytes* to (width x height) and return PNG bytes."""
+    if not isinstance(width, int) or not isinstance(height, int):
+        raise ValueError("width and height must be integers.")
+    if width <= 0 or height <= 0:
+        raise ValueError("width and height must be positive integers.")
+
+    with Image.open(BytesIO(image_bytes)) as img:
+        resized = img.resize((width, height), Image.Resampling.LANCZOS)
+        output = BytesIO()
+        resized.save(output, format="PNG")
+        return output.getvalue()
+
+
 def execute_operation(operation, input_file, parameters):
     if operation == "PROFILE":
         return profile_csv(input_file)
+
+    if operation == "RESIZE":
+        width = parameters.get("width")
+        height = parameters.get("height")
+        return resize_image(input_file, width, height)
 
     raise ValueError(
         f"Operation is not implemented: {operation}"

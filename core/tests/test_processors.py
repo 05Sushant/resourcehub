@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from core.processors import execute_operation, profile_csv
+from core.processors import execute_operation, profile_csv, resize_image
 
 class CSVProfileTest(SimpleTestCase):
 
@@ -107,3 +107,84 @@ class CSVProfileTest(SimpleTestCase):
 
         self.assertEqual(result["rows"], 2)
         self.assertEqual(result["columns"], 2)
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _make_png_bytes(width=100, height=80):
+    """Create a minimal solid-colour PNG in memory and return its bytes."""
+    from io import BytesIO
+    from PIL import Image
+
+    img = Image.new("RGB", (width, height), color=(255, 0, 0))
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+# ---------------------------------------------------------------------------
+# IMAGE_PROCESSING → RESIZE processor tests
+# ---------------------------------------------------------------------------
+
+class ImageResizeProcessorTest(SimpleTestCase):
+
+    def setUp(self):
+        self.png_bytes = _make_png_bytes(width=100, height=80)
+
+    # --- resize_image() ---
+
+    def test_resize_image_returns_bytes(self):
+        result = resize_image(self.png_bytes, 50, 40)
+        self.assertIsInstance(result, bytes)
+
+    def test_resize_image_produces_correct_dimensions(self):
+        from io import BytesIO
+        from PIL import Image
+
+        result = resize_image(self.png_bytes, 50, 40)
+        img = Image.open(BytesIO(result))
+        self.assertEqual(img.size, (50, 40))
+
+    def test_resize_image_rejects_zero_width(self):
+        with self.assertRaises(ValueError):
+            resize_image(self.png_bytes, 0, 40)
+
+    def test_resize_image_rejects_zero_height(self):
+        with self.assertRaises(ValueError):
+            resize_image(self.png_bytes, 50, 0)
+
+    def test_resize_image_rejects_negative_dimension(self):
+        with self.assertRaises(ValueError):
+            resize_image(self.png_bytes, -10, 40)
+
+    def test_resize_image_rejects_non_integer_dimensions(self):
+        with self.assertRaises(ValueError):
+            resize_image(self.png_bytes, "50", 40)
+
+    # --- execute_operation() dispatch ---
+
+    def test_execute_operation_dispatches_resize(self):
+        result = execute_operation(
+            "RESIZE",
+            self.png_bytes,
+            {"width": 30, "height": 20},
+        )
+        self.assertIsInstance(result, bytes)
+
+    def test_execute_operation_resize_correct_output_size(self):
+        from io import BytesIO
+        from PIL import Image
+
+        result = execute_operation(
+            "RESIZE",
+            self.png_bytes,
+            {"width": 30, "height": 20},
+        )
+        img = Image.open(BytesIO(result))
+        self.assertEqual(img.size, (30, 20))
+
+    def test_execute_operation_unknown_raises_value_error(self):
+        with self.assertRaises(ValueError):
+            execute_operation("UNKNOWN_OP", self.png_bytes, {})
