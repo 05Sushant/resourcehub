@@ -24,3 +24,6 @@ CURRENT_STATE.md
 
 # Django
 *.log
+
+# Uploaded job files
+jobs/
