@@ -46,3 +46,19 @@ def cancel_reservation(user, reservation):
     reservation.save(update_fields=["status"])
 
     return reservation
+
+SUPPORTED_OPERATIONS = {
+    "CSV_ANALYTICS": {
+        "ANALYZE",
+        "VALIDATE",
+        "PROFILE",
+    },
+    "IMAGE_PROCESSING": {
+        "RESIZE",
+        "GRAYSCALE",
+    },
+}
+
+
+def validate_operation(resource_type, operation):
+    return operation in SUPPORTED_OPERATIONS.get(resource_type, set())
