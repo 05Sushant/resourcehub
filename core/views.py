@@ -1,11 +1,11 @@
-from django.db.migrations import serializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Resource, Reservation
-from .serializers import ResourceSerializer, ReservationSerializer, UserRegistrationSerializer
-from .services import cancel_reservation, create_reservation
+from .models import Resource, Reservation, Job
+from .serializers import ResourceSerializer, ReservationSerializer, UserRegistrationSerializer, JobSerializer
+from .services import cancel_reservation, create_reservation, create_job
 from django.shortcuts import get_object_or_404
+from .tasks import process_job
 
 
 class ResourceListView(APIView):
@@ -29,7 +29,7 @@ class ReservationCreateView(APIView):
         )
 
         return Response(serializer.data)
-    
+
     def post(self, request):
         serializer = ReservationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -60,7 +60,7 @@ class ReservationCancelView(APIView):
             )
         except PermissionError as error:
             return Response(
-                {"detail":str(error)}, 
+                {"detail":str(error)},
                 status=403
             )
         except ValueError as error:
@@ -88,3 +88,55 @@ class RegisterView(APIView):
             },
             status=201,
         )
+
+class JobListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        jobs = Job.objects.filter(user=request.user).order_by('-created_at')
+        serializer = JobSerializer(jobs, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = JobSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            job = create_job(
+                user=request.user,
+                resource=serializer.validated_data['resource'],
+                operation=serializer.validated_data['operation'],
+                parameters=serializer.validated_data.get('parameters', {}),
+                input_file=serializer.validated_data['input_file'],
+            )
+        except ValueError as error:
+            return Response({'detail': str(error)}, status=400)
+
+        try:
+            task = process_job.delay(job.id)
+            job.celery_task_id = task.id
+            job.save(update_fields=["celery_task_id"])
+
+        except Exception:
+            job.status = Job.Status.FAILED
+            job.error_message = "Failed to submit task to Celery."
+            job.save(update_fields=["status", "error_message"])
+
+            return Response(
+                {"detail": "Failed to submit job for processing."},
+                status=500,
+            )
+
+        response_serializer = JobSerializer(job)
+        return Response(response_serializer.data, status=201)
+
+class JobDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, job_id):
+        job = get_object_or_404(Job, pk=job_id)
+        if job.user != request.user:
+            return Response({'detail': 'Not found.'}, status=404)
+
+        serializer = JobSerializer(job)
+        return Response(serializer.data)

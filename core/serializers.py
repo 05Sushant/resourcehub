@@ -1,7 +1,8 @@
+import json
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
-from core.models import Resource, Reservation
+from core.models import Resource, Reservation, Job
 
 
 class ResourceSerializer(serializers.ModelSerializer):
@@ -63,3 +64,47 @@ class UserRegistrationSerializer(serializers.Serializer):
             email=validated_data["email"],
             password=validated_data["password"],
         )
+
+class JobSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Job
+        fields = [
+            "id",
+            "resource",
+            "operation",
+            "parameters",
+            "status",
+            "input_file",
+            "result_file",
+            "celery_task_id",
+            "error_message",
+            "created_at",
+            "started_at",
+            "completed_at",
+        ]
+        read_only_fields = [
+            "id",
+            "status",
+            "result_file",
+            "celery_task_id",
+            "error_message",
+            "created_at",
+            "started_at",
+            "completed_at",
+        ]
+
+    def validate_parameters(self, value):
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                raise serializers.ValidationError(
+                    "Parameters must be valid JSON."
+                )
+
+        if not isinstance(value, dict):
+            raise serializers.ValidationError(
+                "Parameters must be a JSON object."
+            )
+
+        return value
