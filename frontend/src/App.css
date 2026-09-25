@@ -1,12 +1,6 @@
-.container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex-grow: 1;
-  padding: 2rem;
-}
-
+/* ==========================================
+   AUTH LAYOUT
+   ========================================== */
 .auth-container {
   display: flex;
   justify-content: center;
@@ -51,7 +45,8 @@
   color: var(--text-h);
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
   padding: 0.75rem;
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -60,32 +55,10 @@
   color: var(--text-h);
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   outline: none;
   border-color: #aa3bff;
-}
-
-.btn-primary {
-  background: #aa3bff;
-  color: #fff;
-  border: none;
-  padding: 0.8rem;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 0.5rem;
-  transition: opacity 0.2s;
-}
-
-.btn-primary:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
-.btn-primary:disabled {
-  background: var(--border);
-  color: var(--text);
-  cursor: not-allowed;
 }
 
 .auth-error {
@@ -95,6 +68,7 @@
   border-radius: 4px;
   font-size: 0.9rem;
   text-align: left;
+  word-break: break-word;
 }
 
 .auth-link {
@@ -112,7 +86,58 @@
   text-decoration: underline;
 }
 
-/* Main Layout */
+/* ==========================================
+   BUTTONS
+   ========================================== */
+.btn-primary {
+  background: #aa3bff;
+  color: #fff;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-primary:disabled {
+  background: var(--border);
+  color: var(--text);
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #aa3bff;
+  border: 1px solid #aa3bff;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: rgba(170, 59, 255, 0.1);
+}
+
+/* ==========================================
+   MAIN LAYOUT
+   ========================================== */
 .main-layout {
   display: flex;
   flex-direction: column;
@@ -124,9 +149,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
+  padding: 1rem 2rem;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .brand {
@@ -139,6 +166,7 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .main-nav a {
@@ -175,7 +203,72 @@
   box-sizing: border-box;
 }
 
-/* Dashboard */
+/* ==========================================
+   LOADING SPINNER
+   ========================================== */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border);
+  border-top-color: #aa3bff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-small {
+  width: 20px;
+  height: 20px;
+  border-width: 3px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================
+   ERROR MESSAGE
+   ========================================== */
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.error-message p {
+  color: #e53e3e;
+  font-size: 1rem;
+}
+
+/* ==========================================
+   EMPTY STATE
+   ========================================== */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* ==========================================
+   DASHBOARD
+   ========================================== */
 .dashboard {
   display: flex;
   flex-direction: column;
@@ -188,12 +281,26 @@
   font-size: 2rem;
 }
 
+.dashboard-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.section h2 {
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
 .dashboard-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
 }
 
+/* ==========================================
+   CARDS
+   ========================================== */
 .card {
   background: var(--bg);
   border: 1px solid var(--border);
@@ -204,55 +311,319 @@
 
 .card h3 {
   margin-top: 0;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: var(--text-h);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
-.card-value {
+/* ==========================================
+   RESOURCE CARD
+   ========================================== */
+.resource-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resource-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.resource-type {
+  font-size: 0.85rem;
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.resource-desc {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.resource-capacity {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.resource-disabled {
+  opacity: 0.6;
+}
+
+/* ==========================================
+   STATUS BADGES
+   ========================================== */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-active,
+.status-completed {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.status-disabled,
+.status-failed {
+  background: #fed7d7;
+  color: #9b2c2c;
+}
+
+.status-pending {
+  background: #fefcbf;
+  color: #744210;
+}
+
+.status-running {
+  background: #bee3f8;
+  color: #2a4365;
+}
+
+/* ==========================================
+   CREATE JOB PAGE
+   ========================================== */
+.create-job-page {
+  text-align: left;
+  max-width: 600px;
+}
+
+.create-job-page h1 {
   font-size: 2rem;
-  font-weight: bold;
-  color: #aa3bff;
+  margin-bottom: 1.5rem;
+}
+
+.create-job-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.operation-display {
+  padding: 0.75rem;
+  background: rgba(170, 59, 255, 0.08);
+  border: 1px solid rgba(170, 59, 255, 0.2);
+  border-radius: 4px;
+  color: var(--text-h);
+  font-weight: 500;
+}
+
+.form-hint {
+  font-size: 0.8rem;
+  color: var(--text);
   margin: 0;
 }
 
-.card-value span {
-  font-size: 0.9rem;
-  font-weight: normal;
-  color: var(--text);
-  margin-left: 0.5rem;
+/* ==========================================
+   JOBS PAGE
+   ========================================== */
+.jobs-page {
+  text-align: left;
 }
 
-.dashboard-actions {
+.jobs-page h1 {
+  font-size: 2rem;
+  margin-bottom: 0;
+}
+
+.jobs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.jobs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.job-card {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: border-color 0.2s;
+}
+
+.job-card:hover {
+  border-color: #aa3bff;
+}
+
+.job-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.job-id {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-h);
+}
+
+.job-card-body p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+/* ==========================================
+   JOB DETAILS PAGE
+   ========================================== */
+.job-details-page {
+  text-align: left;
+  max-width: 700px;
+}
+
+.job-details-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.job-details-header h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.job-status-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.status-msg-pending {
+  background: #fefcbf;
+  color: #744210;
+}
+
+.status-msg-running {
+  background: #bee3f8;
+  color: #2a4365;
+}
+
+.status-msg-completed {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.status-msg-failed {
+  background: #fed7d7;
+  color: #9b2c2c;
+}
+
+.job-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.job-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.job-info-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.job-info-value {
+  font-size: 1rem;
+  color: var(--text-h);
+  word-break: break-word;
+}
+
+.job-result-section {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.job-result-section h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.result-image-container {
+  margin-bottom: 1rem;
+}
+
+.result-image {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.job-details-actions {
   display: flex;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.btn-secondary {
-  background: transparent;
-  color: #aa3bff;
-  border: 1px solid #aa3bff;
-  padding: 0.8rem 1.5rem;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+@media (max-width: 768px) {
+  .main-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+  }
 
-.btn-secondary:hover {
-  background: rgba(170, 59, 255, 0.1);
-}
+  .main-nav {
+    gap: 1rem;
+  }
 
-.btn-primary {
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.8rem 1.5rem;
+  .main-content {
+    padding: 1rem;
+  }
+
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .job-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .jobs-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-actions,
+  .job-details-actions {
+    flex-direction: column;
+  }
+
+  .dashboard-actions .btn-primary,
+  .dashboard-actions .btn-secondary,
+  .job-details-actions .btn-primary,
+  .job-details-actions .btn-secondary {
+    width: 100%;
+  }
 }
