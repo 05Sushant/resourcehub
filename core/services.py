@@ -1,6 +1,6 @@
 from django.db import transaction
 
-from core.models import Reservation, Resource
+from core.models import Job, Reservation, Resource
 
 
 @transaction.atomic
@@ -62,3 +62,50 @@ SUPPORTED_OPERATIONS = {
 
 def validate_operation(resource_type, operation):
     return operation in SUPPORTED_OPERATIONS.get(resource_type, set())
+
+
+def validate_parameters(operation, parameters):
+    if operation == "RESIZE":
+        return (
+            isinstance(parameters.get("width"), int)
+            and isinstance(parameters.get("height"), int)
+            and parameters["width"] > 0
+            and parameters["height"] > 0
+        )
+
+    return parameters == {}
+
+
+def create_job(
+    user,
+    resource,
+    operation,
+    parameters,
+    input_file,
+):
+    if resource.status != resource.Status.ACTIVE:
+        raise ValueError("Resource is not active.")
+
+    if not validate_operation(
+        resource.resource_type,
+        operation,
+    ):
+        raise ValueError(
+            "Operation is not supported by this resource."
+        )
+
+    if not validate_parameters(
+        operation,
+        parameters,
+    ):
+        raise ValueError(
+            "Invalid parameters for this operation."
+        )
+
+    return Job.objects.create(
+        user=user,
+        resource=resource,
+        operation=operation,
+        parameters=parameters,
+        input_file=input_file,
+    )
