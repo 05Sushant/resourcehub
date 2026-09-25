@@ -1,9 +1,9 @@
 from django.db.migrations import serializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Resource, Reservation
-from .serializers import ResourceSerializer, ReservationSerializer
+from .serializers import ResourceSerializer, ReservationSerializer, UserRegistrationSerializer
 from .services import cancel_reservation, create_reservation
 from django.shortcuts import get_object_or_404
 
@@ -71,4 +71,20 @@ class ReservationCancelView(APIView):
 
         serializer = ReservationSerializer(reservation)
         return Response(serializer.data)
-    
+
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+            },
+            status=201,
+        )
