@@ -197,6 +197,20 @@ def validate_csv(csv_content, expected_schema):
         series = df[column]
 
         if expected_type == "string":
+            for index, value in series.items():
+
+                if pd.isna(value):
+                    continue
+
+                if not isinstance(value, str):
+                    errors.append(
+                        ValidationError(
+                            column=column,
+                            row=index + 2,
+                            message="Expected string.",
+                        )
+                    )
+
             continue
 
         if expected_type not in ("integer", "float"):
