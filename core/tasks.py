@@ -23,7 +23,7 @@ def process_job(job_id):
         input_bytes = job.input_file.read()
 
         # Image operations need raw bytes; text operations need a decoded string.
-        if job.operation in ("RESIZE",):
+        if job.operation in ("RESIZE", "GRAYSCALE"):
             input_data = input_bytes
         else:
             input_data = input_bytes.decode("utf-8")

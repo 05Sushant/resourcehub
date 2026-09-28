@@ -6,6 +6,14 @@ import JobStatusBadge from '../components/JobStatusBadge';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 
+const OPERATION_LABELS: Record<string, string> = {
+  PROFILE: 'CSV Profile',
+  ANALYZE: 'CSV Analysis',
+  VALIDATE: 'CSV Validation',
+  RESIZE: 'Image Resize',
+  GRAYSCALE: 'Image Grayscale',
+};
+
 export default function Jobs() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -14,6 +22,7 @@ export default function Jobs() {
   const fetchJobs = async () => {
     setIsLoading(true);
     setError('');
+
     try {
       const data = await getJobs();
       setJobs(data);
@@ -26,6 +35,7 @@ export default function Jobs() {
 
   useEffect(() => {
     let ignore = false;
+
     async function load() {
       try {
         const data = await getJobs();
@@ -36,8 +46,12 @@ export default function Jobs() {
         if (!ignore) setIsLoading(false);
       }
     }
+
     load();
-    return () => { ignore = true; };
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const formatDate = (dateStr: string) => {
@@ -56,28 +70,48 @@ export default function Jobs() {
     <div className="jobs-page">
       <div className="jobs-header">
         <h1>My Jobs</h1>
-        <Link to="/create-job" className="btn-primary">Create Job</Link>
+        <Link to="/create-job" className="btn-primary">
+          Create Job
+        </Link>
       </div>
 
       {jobs.length === 0 ? (
         <div className="empty-state">
           <p>No jobs yet.</p>
-          <Link to="/create-job" className="btn-primary">Create your first job</Link>
+          <Link to="/create-job" className="btn-primary">
+            Create your first job
+          </Link>
         </div>
       ) : (
         <div className="jobs-list">
           {jobs.map((job) => (
-            <Link key={job.id} to={`/jobs/${job.id}`} className="job-card card">
+            <Link
+              key={job.id}
+              to={`/jobs/${job.id}`}
+              className="job-card card"
+            >
               <div className="job-card-header">
                 <span className="job-id">Job #{job.id}</span>
                 <JobStatusBadge status={job.status} />
               </div>
+
               <div className="job-card-body">
-                <p><strong>Operation:</strong> {job.operation}</p>
-                <p><strong>Resource:</strong> #{job.resource}</p>
-                <p><strong>Created:</strong> {formatDate(job.created_at)}</p>
+                <p>
+                  <strong>Operation:</strong>{' '}
+                  {OPERATION_LABELS[job.operation] ?? job.operation}
+                </p>
+                <p>
+                  <strong>Resource:</strong> #{job.resource}
+                </p>
+                <p>
+                  <strong>Created:</strong> {formatDate(job.created_at)}
+                </p>
+
                 {job.completed_at && (
-                  <p><strong>Completed:</strong> {formatDate(job.completed_at)}</p>
+                  <p>
+                    <strong>Completed:</strong>{' '}
+                    {formatDate(job.completed_at)}
+                  </p>
                 )}
               </div>
             </Link>

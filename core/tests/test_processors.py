@@ -1,6 +1,13 @@
 from django.test import SimpleTestCase
 
-from core.processors import execute_operation, profile_csv, resize_image
+from core.processors import (
+    analyze_csv,
+    execute_operation,
+    profile_csv,
+    resize_image,
+    grayscale_image,
+    validate_csv,
+)
 
 class CSVProfileTest(SimpleTestCase):
 
@@ -19,9 +26,27 @@ class CSVProfileTest(SimpleTestCase):
         self.assertEqual(
             result["columns_info"],
             [
-                {"name": "name", "type": "string"},
-                {"name": "age", "type": "integer"},
-                {"name": "salary", "type": "integer"},
+                {
+                    "name": "name",
+                    "type": "string",
+                    "missing": 0,
+                    "unknown": 0,
+                    "unique": 2,
+                },
+                {
+                    "name": "age",
+                    "type": "integer",
+                    "missing": 0,
+                    "unknown": 0,
+                    "unique": 2,
+                },
+                {
+                    "name": "salary",
+                    "type": "integer",
+                    "missing": 0,
+                    "unknown": 0,
+                    "unique": 2,
+                },
             ],
         )
 
@@ -51,8 +76,20 @@ class CSVProfileTest(SimpleTestCase):
         self.assertEqual(
             result["columns_info"],
             [
-                {"name": "temperature", "type": "float"},
-                {"name": "balance", "type": "integer"},
+                {
+                    "name": "temperature",
+                    "type": "float",
+                    "missing": 0,
+                    "unknown": 0,
+                    "unique": 2,
+                },
+                {
+                    "name": "balance",
+                    "type": "integer",
+                    "missing": 0,
+                    "unknown": 0,
+                    "unique": 2,
+                },
             ],
         )
 
@@ -69,9 +106,27 @@ class CSVProfileTest(SimpleTestCase):
         self.assertEqual(
             result["columns_info"],
             [
-                {"name": "name", "type": "string"},
-                {"name": "age", "type": "integer"},
-                {"name": "salary", "type": "integer"},
+                {
+                    "name": "name",
+                    "type": "string",
+                    "missing": 0,
+                    "unknown": 0,
+                    "unique": 3,
+                },
+                {
+                    "name": "age",
+                    "type": "integer",
+                    "missing": 1,
+                    "unknown": 0,
+                    "unique": 2,
+                },
+                {
+                    "name": "salary",
+                    "type": "integer",
+                    "missing": 1,
+                    "unknown": 0,
+                    "unique": 2,
+                },
             ],
         )
 
@@ -87,8 +142,20 @@ class CSVProfileTest(SimpleTestCase):
         self.assertEqual(
             result["columns_info"],
             [
-                {"name": "name", "type": "string"},
-                {"name": "notes", "type": "string"},
+                {
+                    "name": "name",
+                    "type": "string",
+                    "missing": 0,
+                    "unknown": 0,
+                    "unique": 2,
+                },
+                {
+                    "name": "notes",
+                    "type": "string",
+                    "missing": 2,
+                    "unknown": 0,
+                    "unique": 0,
+                },
             ],
         )
 
@@ -108,6 +175,333 @@ class CSVProfileTest(SimpleTestCase):
         self.assertEqual(result["rows"], 2)
         self.assertEqual(result["columns"], 2)
 
+    def test_profile_csv_preserves_numeric_type_with_unknown_values(self):
+        csv_content = (
+            "age\n"
+            "21\n"
+            "22\n"
+            "unknown\n"
+            "23\n"
+            "24\n"
+        )
+
+        result = profile_csv(csv_content)
+
+        self.assertEqual(
+            result["columns_info"],
+            [
+                {
+                    "name": "age",
+                    "type": "integer",
+                    "missing": 0,
+                    "unknown": 1,
+                    "unique": 5,
+                },
+            ],
+        )
+
+
+    def test_profile_csv_treats_column_as_string_when_numeric_values_do_not_dominate(
+        self,
+    ):
+        csv_content = (
+            "value\n"
+            "21\n"
+            "hello\n"
+            "world\n"
+        )
+
+        result = profile_csv(csv_content)
+
+        self.assertEqual(
+            result["columns_info"],
+            [
+                {
+                    "name": "value",
+                    "type": "string",
+                    "missing": 0,
+                    "unknown": 0,
+                    "unique": 3,
+                },
+            ],
+        )
+
+    def test_analyze_csv_returns_numeric_statistics(self):
+        csv_content = (
+            "name,age,salary\n"
+            "Alice,25,50000\n"
+            "Bob,30,60000\n"
+            "Charlie,35,70000\n"
+        )
+
+        result = analyze_csv(csv_content)
+
+        self.assertEqual(result["rows"], 3)
+        self.assertEqual(result["columns"], 3)
+
+        self.assertEqual(
+            result["columns_info"][0],
+            {
+                "name": "name",
+                "type": "string",
+                "missing": 0,
+                "unknown": 0,
+                "unique": 3,
+                "statistics": None,
+            },
+        )
+
+        self.assertEqual(
+            result["columns_info"][1],
+            {
+                "name": "age",
+                "type": "integer",
+                "missing": 0,
+                "unknown": 0,
+                "unique": 3,
+                "statistics": {
+                    "min": 25.0,
+                    "max": 35.0,
+                    "mean": 30.0,
+                },
+            },
+        )
+
+    def test_analyze_csv_ignores_unknown_numeric_values(self):
+        csv_content = (
+            "age\n"
+            "20\n"
+            "unknown\n"
+            "30\n"
+            "40\n"
+        )
+
+        result = analyze_csv(csv_content)
+
+        self.assertEqual(
+            result["columns_info"][0],
+            {
+                "name": "age",
+                "type": "integer",
+                "missing": 0,
+                "unknown": 1,
+                "unique": 4,
+                "statistics": {
+                    "min": 20.0,
+                    "max": 40.0,
+                    "mean": 30.0,
+                },
+            },
+        )
+
+    def test_execute_operation_runs_analyze(self):
+        csv_content = (
+            "age\n"
+            "20\n"
+            "30\n"
+        )
+
+        result = execute_operation(
+            "ANALYZE",
+            csv_content,
+            {},
+        )
+
+        self.assertEqual(result["rows"], 2)
+        self.assertEqual(
+            result["columns_info"][0]["statistics"]["mean"],
+            25.0,
+        )
+
+    def test_validate_csv_accepts_valid_data(self):
+        csv_content = (
+            "name,age,salary\n"
+            "Alice,25,50000.5\n"
+            "Bob,30,60000.0\n"
+        )
+
+        result = validate_csv(
+            csv_content,
+            {
+                "columns": {
+                    "name": "string",
+                    "age": "integer",
+                    "salary": "float",
+                }
+            },
+        )
+
+        self.assertTrue(result["valid"])
+        self.assertEqual(result["errors"], [])
+
+    def test_validate_csv_rejects_invalid_integer(self):
+        csv_content = (
+            "name,age\n"
+            "Alice,25\n"
+            "Bob,unknown\n"
+        )
+
+        result = validate_csv(
+            csv_content,
+            {
+                "columns": {
+                    "name": "string",
+                    "age": "integer",
+                }
+            },
+        )
+
+        self.assertFalse(result["valid"])
+
+        self.assertEqual(
+            result["errors"],
+            [
+                {
+                    "column": "age",
+                    "row": 3,
+                    "message": "Expected integer.",
+                }
+            ],
+        )
+
+    def test_validate_csv_rejects_missing_numeric_value(self):
+        csv_content = (
+            "name,age\n"
+            "Alice,25\n"
+            "Bob,\n"
+        )
+
+        result = validate_csv(
+            csv_content,
+            {
+                "columns": {
+                    "name": "string",
+                    "age": "integer",
+                }
+            },
+        )
+
+        self.assertFalse(result["valid"])
+
+        self.assertEqual(
+            result["errors"],
+            [
+                {
+                    "column": "age",
+                    "row": 3,
+                    "message": "Expected integer, but value is missing.",
+                }
+            ],
+        )
+
+    def test_validate_csv_rejects_decimal_for_integer(self):
+        csv_content = (
+            "age\n"
+            "25\n"
+            "25.5\n"
+        )
+
+        result = validate_csv(
+            csv_content,
+            {
+                "columns": {
+                    "age": "integer",
+                }
+            },
+        )
+
+        self.assertFalse(result["valid"])
+
+        self.assertEqual(
+            result["errors"],
+            [
+                {
+                    "column": "age",
+                    "row": 3,
+                    "message": "Expected integer.",
+                }
+            ],
+        )
+
+    def test_validate_csv_rejects_missing_column(self):
+        csv_content = (
+            "name,age\n"
+            "Alice,25\n"
+        )
+
+        result = validate_csv(
+            csv_content,
+            {
+                "columns": {
+                    "name": "string",
+                    "age": "integer",
+                    "salary": "float",
+                }
+            },
+        )
+
+        self.assertFalse(result["valid"])
+
+        self.assertEqual(
+            result["errors"],
+            [
+                {
+                    "column": "salary",
+                    "row": None,
+                    "message": "Expected column is missing.",
+                }
+            ],
+        )
+
+    def test_validate_csv_rejects_extra_column(self):
+        csv_content = (
+            "name,age,email\n"
+            "Alice,25,a@example.com\n"
+        )
+
+        result = validate_csv(
+            csv_content,
+            {
+                "columns": {
+                    "name": "string",
+                    "age": "integer",
+                }
+            },
+        )
+
+        self.assertFalse(result["valid"])
+
+        self.assertEqual(
+            result["errors"],
+            [
+                {
+                    "column": "email",
+                    "row": None,
+                    "message": "Unexpected column.",
+                }
+            ],
+        )
+
+    def test_execute_operation_runs_validate(self):
+        csv_content = (
+            "name,age\n"
+            "Alice,25\n"
+            "Bob,30\n"
+        )
+
+        result = execute_operation(
+            "VALIDATE",
+            csv_content,
+            {
+                "columns": {
+                    "name": "string",
+                    "age": "integer",
+                }
+            },
+        )
+
+        self.assertTrue(result["valid"])
+        self.assertEqual(result["errors"], [])
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -184,6 +578,62 @@ class ImageResizeProcessorTest(SimpleTestCase):
         )
         img = Image.open(BytesIO(result))
         self.assertEqual(img.size, (30, 20))
+
+    def test_execute_operation_unknown_raises_value_error(self):
+        with self.assertRaises(ValueError):
+            execute_operation("UNKNOWN_OP", self.png_bytes, {})
+
+    def test_grayscale_image_returns_bytes(self):
+        result = grayscale_image(self.png_bytes)
+
+        self.assertIsInstance(result, bytes)
+
+    def test_grayscale_image_preserves_dimensions(self):
+        from io import BytesIO
+        from PIL import Image
+
+        result = grayscale_image(self.png_bytes)
+
+        img = Image.open(BytesIO(result))
+
+        self.assertEqual(img.size, (100, 80))
+
+    def test_grayscale_image_produces_grayscale_image(self):
+        from io import BytesIO
+        from PIL import Image
+
+        result = grayscale_image(self.png_bytes)
+
+        img = Image.open(BytesIO(result))
+
+        self.assertEqual(img.mode, "L")
+
+    def test_grayscale_image_rejects_invalid_image(self):
+        with self.assertRaises(ValueError):
+            grayscale_image(b"not an image")
+
+    def test_execute_operation_dispatches_grayscale(self):
+        result = execute_operation(
+            "GRAYSCALE",
+            self.png_bytes,
+            {},
+        )
+
+        self.assertIsInstance(result, bytes)
+
+    def test_execute_operation_grayscale_produces_grayscale_image(self):
+        from io import BytesIO
+        from PIL import Image
+
+        result = execute_operation(
+            "GRAYSCALE",
+            self.png_bytes,
+            {},
+        )
+
+        img = Image.open(BytesIO(result))
+
+        self.assertEqual(img.mode, "L")
 
     def test_execute_operation_unknown_raises_value_error(self):
         with self.assertRaises(ValueError):

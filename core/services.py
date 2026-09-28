@@ -1,6 +1,7 @@
 from django.db import transaction
 
 from core.models import Job, Reservation, Resource
+from core.operations import validate_operation
 
 
 @transaction.atomic
@@ -47,23 +48,6 @@ def cancel_reservation(user, reservation):
 
     return reservation
 
-SUPPORTED_OPERATIONS = {
-    "CSV_ANALYTICS": {
-        "ANALYZE",
-        "VALIDATE",
-        "PROFILE",
-    },
-    "IMAGE_PROCESSING": {
-        "RESIZE",
-        "GRAYSCALE",
-    },
-}
-
-
-def validate_operation(resource_type, operation):
-    return operation in SUPPORTED_OPERATIONS.get(resource_type, set())
-
-
 def validate_parameters(operation, parameters):
     if operation == "RESIZE":
         return (
@@ -71,6 +55,18 @@ def validate_parameters(operation, parameters):
             and isinstance(parameters.get("height"), int)
             and parameters["width"] > 0
             and parameters["height"] > 0
+        )
+
+    if operation == "VALIDATE":
+        columns = parameters.get("columns")
+
+        return (
+            isinstance(columns, dict)
+            and len(columns) > 0
+            and all(
+                column_type in {"string", "integer", "float"}
+                for column_type in columns.values()
+            )
         )
 
     return parameters == {}
