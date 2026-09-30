@@ -7,9 +7,9 @@ from celery import shared_task
 
 from core.models import Job
 from core.processors import execute_operation
-@shared_task
-def add_numbers(a, b):
-    return a + b
+# @shared_task
+# def add_numbers(a, b):
+#     return a + b
 
 @shared_task
 def process_job(job_id):
