@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  redis:
+    image: redis:latest
+
+  web:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+    volumes:
+      - media_data:/app/media
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+    volumes:
+      - media_data:/app/media
+    command: celery -A resourcehub worker --loglevel=info --pool=solo
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:
+  media_data:

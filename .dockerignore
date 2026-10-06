@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+
+# Environment variables / secrets
+.env
+.env.*
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+
+# Frontend dependencies
+frontend/node_modules/
+
+# Django local files
+db.sqlite3
+*.log
+
+# Uploaded/media files
+media/
